@@ -1,0 +1,34 @@
+services:
+  nginx:
+    image: nginx:alpine
+    restart: always
+    networks: [ proxy-net, default ]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.registry.rule=Host(`registry.techsandboxing.com`)"
+    volumes:
+      - ./docker/production/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./htpasswd:/etc/nginx/auth/htpasswd:ro
+    depends_on:
+      - registry
+    environment:
+      - VIRTUAL_HOST=registry.techsandboxing.com
+
+  registry:
+    image: registry:2
+    restart: always
+    volumes:
+      - registry:/var/lib/registry
+    environment:
+      - REGISTRY_HTTP_RELATIVEURLS=true
+      - REGISTRY_STORAGE_DELETE_ENABLED=true
+
+  registry-cli:
+    build: ./docker/registry-cli
+
+volumes:
+  registry:
+
+networks:
+  proxy-net:
+    external: true
